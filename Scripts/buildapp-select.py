@@ -316,9 +316,6 @@ def main(
     ))
 
 if __name__ == '__main__':
-    if str(sys.platform) != "darwin":
-        print("Can only be run on macOS")
-        exit(1)
     # Setup the cli args
     parser = argparse.ArgumentParser(prog="buildapp-select.command", description="BuildAppSelect - a py script that builds ProperTree.app")
     parser.add_argument("-c", "--use-current", help="Use the current shebang in the ProperTree.app (assumes the app is in the parent dir of this script)", action="store_true")
@@ -328,6 +325,9 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--output-path", help="Sets the target output path for the ProperTree.app.  Defaults to the parent directory of this script")
     parser.add_argument("-n", "--no-verify", help="Skip all python/tk discovery and validation; use the path from -p (or -c) verbatim.  Requires -p or -c.", action="store_true")
     args = parser.parse_args()
+    if not args.no_verify and str(sys.platform) != "darwin":
+        print("Can only be run on macOS")
+        exit(1)
     try:
         main(
             use_current=args.use_current,
