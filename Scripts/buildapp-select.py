@@ -176,7 +176,8 @@ def main(
     path_list=None,
     min_only_suggestion=True,
     test_load_tk=True,
-    app_path=None
+    app_path=None,
+    no_verify=False
 ):
     # Let's check for an existing app - remove it if it exists,
     # then create and format a new bundle
@@ -205,22 +206,29 @@ def main(
                     pt_current = pt[0][2:].strip()
         except:
             pass
-    print("Locating python versions...")
     if use_current: # Override any passed path_list with our current if needed
         if not pt_current:
             print(" - No current ProperTree python version detected!  Aborting!")
             exit(1)
         path_list = pt_current
-    py_versions,py_tk_failed = gather_python(
-        min_only_suggestion=min_only_suggestion,
-        test_load_tk=test_load_tk,
-        path_list=path_list
-    )
-    if not py_versions:
-        print(" - No python installs with functioning tk found!  Aborting!")
-        exit(1)
-    min_tk = get_min_tk_version()
-    py_version = py_versions[0] if len(py_versions) == 1 else select_py(py_versions,min_tk,pt_current,py_tk_failed)
+    if no_verify:
+        if not path_list:
+            print(" - --no-verify requires a python path via -p or -c!  Aborting!")
+            exit(1)
+        pypath = path_list[0] if isinstance(path_list,(list,tuple)) else path_list
+        py_version = (pypath,"","")
+    else:
+        print("Locating python versions...")
+        py_versions,py_tk_failed = gather_python(
+            min_only_suggestion=min_only_suggestion,
+            test_load_tk=test_load_tk,
+            path_list=path_list
+        )
+        if not py_versions:
+            print(" - No python installs with functioning tk found!  Aborting!")
+            exit(1)
+        min_tk = get_min_tk_version()
+        py_version = py_versions[0] if len(py_versions) == 1 else select_py(py_versions,min_tk,pt_current,py_tk_failed)
     os.system("clear")
     print("Building .app with the following python install:")
     print(" - {}".format(py_version[0]))
@@ -318,6 +326,7 @@ if __name__ == '__main__':
     parser.add_argument("-m", "--minimum-tk-enforced", help="Enforces minimum tk versions depending on the OS version (default is just to suggest)", action="store_true")
     parser.add_argument("-t", "--do-not-test-load-tk", help="Do not attempt to load discovered tk instances to verify whether or not they crash", action="store_true")
     parser.add_argument("-o", "--output-path", help="Sets the target output path for the ProperTree.app.  Defaults to the parent directory of this script")
+    parser.add_argument("-n", "--no-verify", help="Skip all python/tk discovery and validation; use the path from -p (or -c) verbatim.  Requires -p or -c.", action="store_true")
     args = parser.parse_args()
     try:
         main(
@@ -325,7 +334,8 @@ if __name__ == '__main__':
             path_list=args.python_path,
             min_only_suggestion=not args.minimum_tk_enforced,
             test_load_tk=not args.do_not_test_load_tk,
-            app_path=args.output_path
+            app_path=args.output_path,
+            no_verify=args.no_verify
         )
     except Exception as e:
         print("An error occurred!")
